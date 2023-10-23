@@ -1,0 +1,21 @@
+{
+"codigo_pedido_credito":uuidv4,
+"cnpj": validacnpj(cnpj),
+"status_pedido":null,
+"segmento_bancario": "K",
+"codigo_canal_solicitacao":"01",
+"descricao_canal_solicitacao":"mobile",
+"valor_pedido": 55000000.00,
+"unidade_monetaria":"BRL",
+"nome_grupo":"Grupo Carrefur",
+"data_pedido":"2020-01-01T11:00:00.00000",
+"prazo":360,
+"unidade_prazo":"dias",
+"codigo_identificacao_origem":"999999",
+"parecer_origem_pedido":{ "funcional_colaborador":999999999,
+"texto_parecer":"estou de acordo com aprovação desse credito",
+"indicador_parecer":"S",
+"data_hora_parecer":"2020-01-01T11:00:00.00000"
+}
+}
+
