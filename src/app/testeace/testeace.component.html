@@ -20,26 +20,29 @@
     </mat-button-toggle-group>
   </mat-drawer>
 
-  <div class="example-sidenav-content">
+  <div class="example-sidenav-content" style="    margin: 30px;  border: 1px solid lightgrey;  border-radius: 4px;">
     <div style="padding: 0px;">
       <div
         style="display: flex; justify-content: space-between;align-items: center;background: white; border-bottom: 1px solid lightgray;">
-        <div style="width: 60%;
-    padding-left: 20px;height: 70px;display: flex;align-items: center;">
+        <div style="width: 60%;    padding-left: 20px;height: 70px;display: flex;align-items: center;">
           <mat-form-field appearance="outline" style="    height: 65px">
             <mat-label>buscar</mat-label>
             <input matInput placeholder="nome da regra">
             <mat-icon matSuffix>search</mat-icon>
           </mat-form-field>
-          <button mat-raised-button color="accent" style="margin-left: 15px;"><mat-icon style="margin-right: 5px;">add</mat-icon > <span style="margin-right: 15px;">nova regra</span></button>
+          <button mat-raised-button color="accent" style="margin-left: 15px;"><mat-icon
+              style="margin-right: 5px;">add</mat-icon> <span style="margin-right: 15px;">nova regra</span></button>
         </div>
 
         <mat-paginator [length]="100" [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page">
         </mat-paginator>
       </div>
-
+      <div>
+        <app-filtro (onPesquisarClick)="getpedidos()"></app-filtro>
+      </div>
       <div style="  padding: 15px; background-color: white;">
         <mat-accordion>
+          <div *ngIf="(pedidosService.listPedidosObj | async) as books"></div>
           <mat-expansion-panel *ngFor="let regra of regras; index as i" (opened)="panelOpenState = true"
             (closed)="panelOpenState = false">
             <mat-expansion-panel-header>
@@ -48,7 +51,8 @@
                 <b style="width: 280px;">{{regra.nome}}</b>
 
                 <div
-                  style=" background: #8a4500;border-radius: 4px;color: white; width: 150px; font-size: 12px; text-align: center;" [style.opacity]="0.3+regra.disparos/1000">
+                  style=" background: #8a4500;border-radius: 4px;color: white; width: 150px; font-size: 12px; text-align: center;"
+                  [style.opacity]="0.3+regra.disparos/1000">
                   {{regra.disparos}} disparos</div>
               </mat-panel-title>
 
@@ -60,7 +64,8 @@
               </mat-panel-description>
             </mat-expansion-panel-header>
 
-            <p style="display: flex;align-items: center;margin-top: 0px;">Regra responsável por identificar a execução do fluxo de
+            <p style="display: flex;align-items: center;margin-top: 0px;">Regra responsável por identificar a execução
+              do fluxo de
               consulta de apontamentos<mat-icon style="    margin-left: 5px;
               font-size: large;">edit</mat-icon></p>
             <hr style="background: lightgray; ">

@@ -32,6 +32,7 @@
     "keen-slider": "^6.8.6",
     "ng-apexcharts": "1.6.0",
     "ngx-ace-wrapper": "^15.0.0",
+    "ngx-slider-v2": "^14.0.5",
     "rxjs": "^7.5.5",
     "rxjs-compat": "^6.6.7",
     "sass": "^1.52.3",

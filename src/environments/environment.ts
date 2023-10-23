@@ -5,6 +5,6 @@
 
 export const environment = {
   production: false,
-  base_url: 'https://assinat-contrato-api-casamento.azure-api.net/example',
+  base_url: 'http://127.0.0.1:8000/pedidos',
   subscription:'63f4a220784e495bb7f8d3c9b2fdcb72'
 };

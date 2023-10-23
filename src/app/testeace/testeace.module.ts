@@ -13,6 +13,12 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatOptionModule } from '@angular/material/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
+import { FiltroComponent } from './filtro/filtro.component';
+import { NgxSliderModule } from 'ngx-slider-v2';
 
 const routes: Routes = [
   { path: '', component: TesteaceComponent }
@@ -23,6 +29,7 @@ const routes: Routes = [
   declarations: [
     TesteaceComponent,
     MainComponent,
+    FiltroComponent,
   ],
   imports: [
     CommonModule,
@@ -31,8 +38,15 @@ const routes: Routes = [
     MatSlideToggleModule,
     MatPaginatorModule,
     MatButtonToggleModule,
-    MatFormFieldModule,
+    MatOptionModule,
     MatInputModule,
+    MatFormFieldModule,
+    NgxSliderModule ,
+    ReactiveFormsModule,
+    MatSelectModule,
+    MatInputModule,
+    FormsModule,
+    MatRadioModule,
     MatButtonModule,
     MatIconModule,
     MatSidenavModule,

@@ -24,7 +24,6 @@ export const route: Routes = [
     path: '',
     component: FullComponent,
     children: [
-      { path: '', loadChildren: () => import('./casamento/casamento.module').then(m => m.CasamentoModule) },
       {
         path: '',
         loadChildren:
