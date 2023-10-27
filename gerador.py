@@ -7,6 +7,7 @@ fake = Faker('pt_BR')
 
 # Definindo uma função para gerar um objeto Pedido
 def gerar_pedido():
+  produto ={'1234':'LTC','1235':'Giro','1236':'Rotativos','1237':'Cartoes','1238':'Emprestimo'}
   # Gerando os atributos do pedido
   codigo_pedido_credito = fake.uuid4()
   cnpj = fake.cnpj()

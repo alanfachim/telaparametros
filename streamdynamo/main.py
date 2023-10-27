@@ -1,4 +1,7 @@
+import datetime
 from typing import Union
+from boto3.dynamodb.conditions import Key, Attr
+from decimal import Decimal
 
 # Importar o módulo elasticsearch
 from elasticsearch import Elasticsearch
@@ -48,30 +51,22 @@ class ElasticSearchQuery:
 # Criar uma instância da classe com o endereço do servidor elastic search
 es_query = ElasticSearchQuery("localhost", 9200)
 
-# Criar um documento para inserir no índice 'tweets'
-# doc = {
-#    'text': 'Eu amo programar em python',
-#    'user': 'João',
-#    'date': '2023-10-21'
-# }
-# Fazer uma inserção no índice 'tweets' com o documento criado
-# result = es_query.insert(index='tweets', doc_type='_doc', doc_id='123', doc_body=doc)
-# Imprimir o resultado
-# print(result) #
-# Fazer uma consulta simples por termo no índice 'tweets' e no campo 'text'
-# results = es_query.query_by_term(index='tweets', field='text', term='python')
-# Imprimir os resultados
-# print(results)
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, validator
 import uuid
+import boto3
 
 app = FastAPI()
 
+# Criando um cliente para acessar o serviço DynamoDB
+dynamodb = boto3.resource('dynamodb', endpoint_url="http://localhost:4566")
 
+# Criando uma tabela chamada Pedidos
+table = dynamodb.Table( 'Pedidos')
 # Definindo o modelo do objeto
 class PedidoCredito(BaseModel):
+    
     codigo_pedido_credito: uuid.UUID = uuid.uuid4()
     cnpj: str
     status_pedido: str = None
@@ -86,22 +81,26 @@ class PedidoCredito(BaseModel):
     unidade_prazo: str = "dias"
     codigo_identificacao_origem: str = "999999"
     parecer_origem_pedido: dict
+    codigo_produto: str
+    descricao_produto: str
 
     # O método para serializar o objeto
     def to_dict(self):
         # Retornando um dicionário com os atributos e valores do objeto
         return {
-            "codigo_pedido_credito": self.codigo_pedido_credito,
+            "codigo_pedido_credito": str(self.codigo_pedido_credito),
             "cnpj": self.cnpj,
             "status_pedido": self.status_pedido,
             "segmento_bancario": self.segmento_bancario,
             "codigo_canal_solicitacao": self.codigo_canal_solicitacao,
             "descricao_canal_solicitacao": self.descricao_canal_solicitacao,
-            "valor_pedido": self.valor_pedido,
+            "valor_pedido": Decimal(self.valor_pedido),
             "unidade_monetaria": self.unidade_monetaria,
             "nome_grupo": self.nome_grupo,
             "data_pedido": self.data_pedido,
             "prazo": self.prazo,
+            "codigo_produto": self.codigo_produto,
+            "descricao_produto": self.descricao_produto,
             "unidade_prazo": self.unidade_prazo,
             "codigo_identificacao_origem": self.codigo_identificacao_origem,
             "parecer_origem_pedido": self.parecer_origem_pedido,
@@ -122,18 +121,7 @@ class PedidoCredito(BaseModel):
 pedidos = []
 
 
-# Criando as rotas para o crud
-@app.post("/pedidos")
-def create_pedido(pedido: PedidoCredito):
-    # Adicionando o objeto à lista
-    pedidos.append(pedido)
-    result = es_query.insert(
-        index="pedidos",
-        doc_type="_doc",
-        doc_id=pedido.codigo_pedido_credito,
-        doc_body=pedido.to_dict(),
-    )
-    return {"message": "Pedido criado com sucesso"}
+
 
 
 @app.get("/pedidos")
@@ -183,3 +171,32 @@ def delete_pedido(codigo_pedido_credito: uuid.UUID):
             return {"message": "Pedido deletado com sucesso"}
     # Se não encontrar, retorna um erro 404
     raise HTTPException(status_code=404, detail="Pedido não encontrado")
+
+
+@app.post('/pedidos')
+def create_pedido(pedido: PedidoCredito):
+    # Consultando se o pedido já existe para o cliente/produto/segmento que não esteja concluído e que a data seja < 30 dias
+    # Usando uma função auxiliar para converter a data_pedido em um objeto datetime
+    data_pedido = datetime.datetime.strptime(pedido.data_pedido, '%Y-%m-%dT%H:%M:%S.%f')
+    # Calculando a diferença entre a data atual e a data do pedido em dias
+    delta = datetime.datetime.now() - data_pedido
+    # Buscando na tabela do dynamo se há algum pedido com os mesmos valores de cnpj, segmento_bancario e valor_pedido, e que tenha status_pedido diferente de 'concluído' e delta menor que 30 dias
+    response = table.query(
+        IndexName='cnpj-codigo_produto-index',
+        KeyConditionExpression=Key('cnpj').eq(pedido.cnpj) & Key('codigo_produto').eq(pedido.codigo_produto),
+        FilterExpression=Attr('status_pedido').ne('concluído') 
+    )
+    # Se houver algum resultado, significa que o pedido já existe
+    if response['Count'] > 0:
+        # Pegando o primeiro resultado da lista (assumindo que não há pedidos duplicados)
+        existing_pedido = response['Items'][0]
+        # Mantendo o id do pedido existente
+        pedido.codigo_pedido_credito = existing_pedido['codigo_pedido_credito']
+        # Sobrescrevendo os dados do pedido na tabela do dynamo usando o método put_item
+        table.put_item(Item=pedido.to_dict())
+        return {'message': 'Pedido atualizado com sucesso'}
+    # Se não houver nenhum resultado, significa que o pedido é novo
+    else:
+        # Adicionando o objeto à tabela do dynamo usando o método put_item
+        table.put_item(Item=pedido.to_dict())
+        return {'message': 'Pedido criado com sucesso'}
