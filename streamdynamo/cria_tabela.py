@@ -5,28 +5,28 @@ import boto3
 dynamodb = boto3.client("dynamodb", endpoint_url="http://localhost:4566")
 # Criando um recurso do tipo aws_lambda_function
 lambdafn = boto3.client("lambda", endpoint_url="http://localhost:4566")
-iam = boto3.client("iam", endpoint_url="http://localhost:4566") 
+iam = boto3.client("iam", endpoint_url="http://localhost:4566")
 
 try:
     iam.detach_role_policy(RoleName="LambdaDynamoDBRole",PolicyArn="arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")
 except:
     print('1')
-    
+
 try:
     iam.detach_role_policy(RoleName="LambdaDynamoDBRole",PolicyArn="arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess")
 except:
     print('2')
-    
+
 try:
     iam.delete_role(RoleName="LambdaDynamoDBRole")
 except:
     print('3')
-    
+
 try:
     dynamodb.delete_table(TableName="Pedidos")
 except:
     print('4')
-    
+
 try:
     lambdafn.delete_function(FunctionName="ProcessDynamoDBRecords")
 except Exception as e:
@@ -112,12 +112,8 @@ iam.attach_role_policy(
     # Especificando a ARN da política gerenciada
     PolicyArn="arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
 )
-import zipfile
-
-z = zipfile.ZipFile("final.zip", "w", zipfile.ZIP_DEFLATED)
-z.write("lambda_streaming_elasticsearch.py")
-z.close()
-
+import shutil
+shutil.make_archive('final', 'zip', './lambda/')
 
 # Criando uma função do Lambda chamada ProcessDynamoDBRecords
 function = lambdafn.create_function(
@@ -129,7 +125,7 @@ function = lambdafn.create_function(
     Handler="lambda_streaming_elasticsearch.lambda_handler",
     # Definindo o tempo de execução
     Runtime="python3.9",
-    
+
     # Definindo a função de execução que dá à função permissão para acessar recursos do AWS
     Role="arn:aws:iam::000000000000:role/LambdaDynamoDBRole",
 )
