@@ -173,3 +173,9 @@ mapping = lambdafn.create_event_source_mapping(
     # Definindo o stream do dynamo que será a fonte do evento
     EventSourceArn=table["TableDescription"]["LatestStreamArn"],
 )
+
+
+| Possibilidade | Descrição | Prós | Contras |
+| --- | --- | --- | --- |
+| Verificar se existe algum pedido em aberto nos últimos 90 dias para o conjunto id_cliente e cod_produto na base | Essa solução consiste em usar uma regra única e simples para todas as chamadas, baseada na existência ou não de um pedido em aberto para o mesmo cliente e produto nos últimos 90 dias. | - Mais fácil de implementar e manter <br> - Mais escalável e confiável <br> - Melhor performance | - Menor satisfação do cliente <br> - Não atende às especificidades de cada segmento <br> - Pode gerar conflitos entre as áreas do banco |
+| Parametrizar a regra que identifica se é atacado ou varejo, e depois executar a regra específica do segmento para identificar se reutiliza o id que já existe ou cria outro | Essa solução consiste em usar uma regra diferente e complexa para cada tipo de chamada, baseada em um parâmetro que identifica se é atacado ou varejo, e depois em uma regra específica do segmento para reutilizar ou criar um novo id. | - Maior satisfação do cliente <br> - Atende às especificidades de cada segmento <br> - Melhor integração entre as áreas do banco | - Mais difícil de implementar e manter <br> - Menos escalável e confiável <br> - Pior performance |
