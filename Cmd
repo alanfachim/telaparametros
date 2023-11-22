@@ -179,3 +179,257 @@ mapping = lambdafn.create_event_source_mapping(
 | --- | --- | --- | --- |
 | Verificar se existe algum pedido em aberto nos últimos 90 dias para o conjunto id_cliente e cod_produto na base | Essa solução consiste em usar uma regra única e simples para todas as chamadas, baseada na existência ou não de um pedido em aberto para o mesmo cliente e produto nos últimos 90 dias. | - Mais fácil de implementar e manter <br> - Mais escalável e confiável <br> - Melhor performance | - Menor satisfação do cliente <br> - Não atende às especificidades de cada segmento <br> - Pode gerar conflitos entre as áreas do banco |
 | Parametrizar a regra que identifica se é atacado ou varejo, e depois executar a regra específica do segmento para identificar se reutiliza o id que já existe ou cria outro | Essa solução consiste em usar uma regra diferente e complexa para cada tipo de chamada, baseada em um parâmetro que identifica se é atacado ou varejo, e depois em uma regra específica do segmento para reutilizar ou criar um novo id. | - Maior satisfação do cliente <br> - Atende às especificidades de cada segmento <br> - Melhor integração entre as áreas do banco | - Mais difícil de implementar e manter <br> - Menos escalável e confiável <br> - Pior performance |
+
+
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.svcsolicitarcredito</groupId>
+  <artifactId>servico-spring-boot</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <!-- Definir o parent do Spring Boot Starter -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.0.7</version>
+    <relativePath/>
+  </parent>
+
+  <!-- Definir as propriedades do projeto -->
+  <properties>
+    <java.version>17</java.version>
+    <aws-java-sdk.version>1.12.49</aws-java-sdk.version>
+    <spring-data-dynamodb.version>5.2.7</spring-data-dynamodb.version>
+  </properties>
+
+  <!-- Definir as dependências do projeto -->
+  <dependencies>
+    <!-- Dependência do Spring Boot Starter Web -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Dependência do AWS SDK for Java -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-bom</artifactId>
+      <version>${aws-java-sdk.version}</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-dynamodb</artifactId>
+      <version>1.11.970</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.boostchicken</groupId>
+      <artifactId>spring-data-dynamodb</artifactId>
+      <version>5.2.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>elasticsearch-rest-high-level-client</artifactId>
+      <version>7.13.0</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/javax.persistence/javax.persistence-api -->
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>javax.persistence-api</artifactId>
+      <version>2.2</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.mapstruct/mapstruct -->
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>1.5.5.Final</version>
+    </dependency>
+
+
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- Dependência do Spring Boot Starter Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.20</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+
+  <!-- Definir o plugin do Spring Boot Maven -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.8.1</version>
+      <configuration>
+        <source>${java.version}</source>
+        <target>${java.version}</target>
+        <annotationProcessorPaths>
+          <path>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.5.5.Final</version>
+          </path>
+        </annotationProcessorPaths>
+      </configuration>
+    </plugin>
+  </plugins>
+  </build>
+
+</project>
+
+
+package com.svcsolicitarcredito.infrastructure.config;
+
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.elasticsearch.client.ClientConfiguration;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+
+// Classe para configurar o ElasticSearch
+@Configuration
+@EnableElasticsearchRepositories(basePackages = "com.svcsolicitarcredito.infrastructure.repository.es")
+public class ElasticSearchConfig {
+
+  private static final String CERT_FILE = "client.p12";
+  private static final String CERT_PASSWORD = "topsecret";
+  private static final String USER_NAME = "user";
+  private static final String USER_PASS = "password";
+  @Value("${elasticsearch.host}")
+  private String elasticsearchHost;
+
+  @Value("${elasticsearch.port}")
+  private int elasticsearchPort;
+
+  @Bean
+  public RestHighLevelClient client () {
+    final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    credentialsProvider.setCredentials (AuthScope.ANY,
+            new UsernamePasswordCredentials("myusername", "mypassword"));
+
+    RestClientBuilder builder = RestClient.builder (new HttpHost(
+                    "localhost", 9200, "https"))
+            .setHttpClientConfigCallback (new RestClientBuilder.HttpClientConfigCallback () {
+              @Override
+              public HttpAsyncClientBuilder customizeHttpClient (HttpAsyncClientBuilder httpClientBuilder) {
+                return httpClientBuilder.setDefaultCredentialsProvider (credentialsProvider);
+              }
+            });
+    return new RestHighLevelClient(builder);
+  }
+
+}
+
+
+package com.svcsolicitarcredito.infrastructure.adapter;
+
+import com.svcsolicitarcredito.domain.entity.ListaPedidoCredito;
+import com.svcsolicitarcredito.domain.entity.SearchCriteria;
+import com.svcsolicitarcredito.domain.port.out.SearchPedidoPort;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.Criteria;
+import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ElasticSearchPedidoAdapter implements SearchPedidoPort {
+    // Adiciona a anotação @Autowired para injetar o objeto elasticsearchOperations
+    @Autowired
+    private ElasticsearchOperations elasticsearchOperations;
+
+
+    @Override
+    public SearchHits<ListaPedidoCredito> searchPedidos (SearchCriteria searchCriteria){
+        // Cria um objeto de critério inicial
+        Criteria criteria = new Criteria();
+        // Adiciona as condições ao critério, se informadas
+        if (searchCriteria.getCodigoCliente() != null) {
+            criteria = criteria.and("codigo_cliente").is(searchCriteria.getCodigoCliente());
+        }
+        if (searchCriteria.getProduto() != null) {
+            criteria = criteria.and("produto").is(searchCriteria.getProduto());
+        }
+        if (searchCriteria.getValorMinimo() != null) {
+            criteria = criteria.and("valor").greaterThanEqual(searchCriteria.getValorMinimo());
+        }
+        if (searchCriteria.getValorMaximo() != null) {
+            criteria = criteria.and("valor").lessThanEqual(searchCriteria.getValorMaximo());
+        }
+        if (searchCriteria.getDataInicio() != null) {
+            criteria = criteria.and("data_pedido").greaterThanEqual(searchCriteria.getDataInicio());
+        }
+        if (searchCriteria.getDataFim() != null) {
+            criteria = criteria.and("data_pedido").lessThanEqual(searchCriteria.getDataFim());
+        }
+        if (searchCriteria.getStatus() != null) {
+            criteria = criteria.and("status").is(searchCriteria.getStatus());
+        }
+        // Cria um objeto de consulta com o critério
+        var query = new CriteriaQuery(criteria);
+        // Executa a consulta usando o cliente do Spring Data Elasticsearch e obtém os resultados
+        return elasticsearchOperations.search(query, ListaPedidoCredito.class);
+    }
+
+
+
+}
