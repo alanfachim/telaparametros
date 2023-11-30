@@ -1,5 +1,17 @@
 docker run -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.7.0
 docker run -d -p 4566:4566 -p 4571:4571 -v /caminho/do/diretório/no/host:/caminho/do/diretório/no/container localstack/localstack
+
+
+// Adicione as seguintes linhas para imprimir o erro
+      for (DynamoDBMapper.FailedBatch failedBatch : failedBatches) {
+        Exception e = failedBatch.getException(); // Obtém a exceção do lote
+        String errorMessage = e.getMessage(); // Obtém a mensagem de erro da exceção
+        System.out.println(errorMessage); // Imprime a mensagem de erro na saída padrão
+        // Ou use um logger para gravar a mensagem de erro em um arquivo de log
+        // logger.error(errorMessage);
+      }
+      throw new Exception("dfsdf");
+
 Tabela solicitacao_credito: essa tabela tem cerca de 40 milhões de registros com cerca de 1 KB por registro, o que resulta em um armazenamento de 40 GB. Essa tabela usa o modo de capacidade provisionada, com 50 WCUs e 50 RCUs. Essa tabela tem uma GSI chamada codigo_cliente-codigo_produto, que é acessada cerca de 60 mil vezes por dia e tem o mesmo tamanho e capacidade da tabela principal. Essa tabela também tem o streaming ativado para enviar dados ao ElasticSearch, o que gera cerca de 50 mil solicitações por dia. O custo mensal estimado para essa tabela é de $ 64,82.
 Tabela regras_roteamento: essa tabela tem cerca de 50 registros com cerca de 100 KB por registro, o que resulta em um armazenamento de 5 MB. Essa tabela usa o modo de capacidade on-demand, com 100 solicitações de leitura por dia. Essa tabela não tem nenhuma GSI nem streaming. O custo mensal estimado para essa tabela é de $ 0,01.
 
