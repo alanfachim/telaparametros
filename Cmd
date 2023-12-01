@@ -1,3 +1,11 @@
+// Crie uma classe que implementa a interface HttpRequestInterceptor public class ResponseInterceptor implements HttpRequestInterceptor {
+
+@Override public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+// Obtenha o objeto HttpResponse do contexto 
+HttpResponse response = (HttpResponse) context.getAttribute(HttpCoreContext.HTTP_RESPONSE);
+// Imprima o status code da resposta System.out.println("Status code: " + response.getStatusLine().getStatusCode()); 
+} }
+
 docker run -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.7.0
 docker run -d -p 4566:4566 -p 4571:4571 -v /caminho/do/diretório/no/host:/caminho/do/diretório/no/container localstack/localstack
 
