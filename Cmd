@@ -1,3 +1,121 @@
+import unittest
+from lambd import lambda_handler, unmarshal_dynamodb_json
+import boto3
+import moto
+
+class TestLambdaFunction(unittest.TestCase):
+
+    def setUp(self):
+        # Criar um evento de exemplo com um registro do DynamoDB
+        self.event = {
+            "Records": [
+                {
+                    "eventID": "1",
+                    "eventName": "INSERT",
+                    "eventVersion": "1.0",
+                    "eventSource": "aws:dynamodb",
+                    "awsRegion": "us-east-1",
+                    "dynamodb": {
+                        "ApproximateCreationDateTime": 1626271620,
+                        "Keys": {
+                            "codigo_pedido_credito": {
+                                "S": "12345678-1234-1234-1234-123456789012"
+                            },
+                            "chave_ordenacao": {
+                                "S": "#PEDIDO"
+                            }
+                        },
+                        "NewImage": {
+                            "codigo_pedido_credito": {
+                                "S": "12345678-1234-1234-1234-123456789012"
+                            },
+                            "chave_ordenacao": {
+                                "S": "#PEDIDO"
+                            },
+                            "codigoCliente": {
+                                "S": "12345678901"
+                            },
+                            "produto": {
+                                "S": "Crédito Pessoal"
+                            },
+                            "valorPedido": {
+                                "N": "1000"
+                            },
+                            "dataPedido": {
+                                "S": "2021-07-14"
+                            },
+                            "status": {
+                                "S": "Aprovado"
+                            }
+                        },
+                        "SequenceNumber": "111",
+                        "SizeBytes": 26,
+                        "StreamViewType": "NEW_AND_OLD_IMAGES"
+                    },
+                    "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789012:table/PedidoCredito/stream/2021-07-14T19:51:37.457"
+                }
+            ]
+        }
+
+        # Criar um contexto de exemplo com um limite de tempo de 10 segundos
+        self.context = {
+            "function_name": "lambda_function",
+            "function_version": "$LATEST",
+            "invoked_function_arn": "arn:aws:lambda:us-east-1:123456789012:function:lambda_function",
+            "memory_limit_in_mb": "128",
+            "aws_request_id": "52fdfc07-2182-154f-163f-5f0f9a621d72",
+            "log_group_name": "/aws/lambda/lambda_function",
+            "log_stream_name": "2021/07/14/[$LATEST]58419525dade4d17a495dceeeed44708",
+            "deadline_ms": 1626271620000 + 10000 # 10 segundos depois do tempo de criação do evento
+        }
+
+    @moto.mock_dynamodb2
+    @moto.mock_secretsmanager
+    @moto.mock_opensearch
+    def test_lambda_handler(self):
+        # Criar um mock do OpenSearch com um índice pedidocredito
+        os_client = boto3.client("opensearch")
+        os_client.create_domain(DomainName="pedidocredito")
+        os_client.create_index(IndexName="pedidocredito")
+
+        # Chamar a função lambda com o evento e o contexto de exemplo
+        result = lambda_handler(self.event, self.context)
+        # Verificar se o resultado é None, pois a função não retorna nada
+        self.assertIsNone(result)
+        # Verificar se o documento foi inserido no índice pedidocredito
+        doc = os_client.get(index="pedidocredito", id="12345678-1234-1234-1234-123456789012")
+        self.assertEqual(doc["_source"], {
+            "codigo_pedido_credito": "12345678-1234-1234-1234-123456789012",
+            "chave_ordenacao": "#PEDIDO",
+            "codigoCliente": "12345678901",
+            "produto": "Crédito Pessoal",
+            "valorPedido": 1000,
+            "dataPedido": "2021-07-14",
+            "status": "Aprovado"
+        })
+
+    def test_unmarshal_dynamodb_json(self):
+        # Obter o item do evento de exemplo
+        item = self.event['Records'][0]['dynamodb']['NewImage']
+        # Chamar a função unmarshal_dynamodb_json com o item
+        doc_body = unmarshal_dynamodb_json(item)
+        # Verificar se o doc_body é um dicionário Python
+        self.assertIsInstance(doc_body, dict)
+        # Verificar se o doc_body contém os campos esperados
+        self.assertEqual(doc_body['codigo_pedido_credito'], '12345678-1234-1234-1234-123456789012')
+        self.assertEqual(doc_body['chave_ordenacao'], '#PEDIDO')
+        self.assertEqual(doc_body['codigoCliente'], '12345678901')
+        self.assertEqual(doc_body['produto'], 'Crédito Pessoal')
+        self.assertEqual(doc_body['valorPedido'], 1000)
+        self.assertEqual(doc_body['dataPedido'], '2021-07-14')
+        self.assertEqual(doc_body['status'], 'Aprovado')
+
+if __name__ == '__main__':
+    unittest.main()
+
+
+
+
 // Crie uma classe que implementa a interface HttpRequestInterceptor public class ResponseInterceptor implements HttpRequestInterceptor {
 
 @Override public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
