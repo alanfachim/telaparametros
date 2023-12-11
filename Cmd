@@ -1,3 +1,60 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { PedidosService, Pedido } from './pedidosService';
+
+describe('PedidosService', () => {
+  let service: PedidosService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [PedidosService]
+    });
+    service = TestBed.inject(PedidosService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  it('should get a pedido by id', () => {
+    const mockPedido: Pedido = {
+      codigo_pedido_credito: 1,
+      cnpj: '123456789',
+      status_pedido: 'Aprovado',
+      segmento_bancario: 'Banco do Brasil',
+      codigo_canal_solicitacao: 2,
+      descricao_canal_solicitacao: 'Online',
+      valor_pedido: 1000,
+      unidade_monetaria: 'Real',
+      nome_grupo: 'Grupo A',
+      data_pedido: '2023-12-09',
+      prazo: 12,
+      unidade_prazo: 'Meses',
+      codigo_identificacao_origem: 3,
+      parecer_origem_pedido: 'OK'
+    };
+    service.base_url =""
+    const id = 1;
+    service.getPedidos(id).subscribe((pedido: any) => {
+      expect(pedido).toEqual(mockPedido);
+    });
+    const req = httpMock.expectOne(`${service.base_url}/pedidos/${id}`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockPedido);
+  });
+
+  // You can write similar tests for other methods using httpMock
+});
+
+
+
 import unittest
 from lambd import lambda_handler, unmarshal_dynamodb_json
 import boto3
