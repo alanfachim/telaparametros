@@ -1,3 +1,66 @@
+// Importar as classes necessárias
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.proxies.apache.http.HttpClientBuilder;
+import com.amazonaws.xray.entities.Subsegment;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
+import com.google.gson.Gson;
+
+// Definir a classe adapter
+public class PedidoCreditoAdapter {
+
+  // Definir o método post que envia o pedidoCredito para o serviço roteador
+  public void post(PedidoCredito pedidoCredito) {
+    // Criar um cliente HTTP com o httpbuilder do aws x-ray
+    CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+
+    // Criar um objeto Gson para serializar o pedidoCredito em JSON
+    Gson gson = new Gson();
+    String json = gson.toJson(pedidoCredito);
+
+    // Criar um objeto HttpPost com a URL do serviço roteador
+    HttpPost httpPost = new HttpPost("https://servico-roteador.com");
+
+    // Configurar o cabeçalho e o corpo da requisição
+    httpPost.setHeader("Content-type", "application/json");
+    httpPost.setEntity(new StringEntity(json, "UTF-8"));
+
+    // Criar um subsegmento do X-Ray para rastrear a requisição
+    Subsegment subsegment = AWSXRay.beginSubsegment("Post pedidoCredito");
+
+    try {
+      // Executar a requisição e obter a resposta
+      org.apache.http.HttpResponse response = httpClient.execute(httpPost);
+
+      // Verificar o status da resposta
+      int statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode >= 200 && statusCode < 300) {
+        // Sucesso
+        subsegment.putAnnotation("Status", "Success");
+      } else {
+        // Erro
+        subsegment.putAnnotation("Status", "Error");
+        subsegment.putAnnotation("Error", response.getStatusLine().getReasonPhrase());
+      }
+
+      // Fechar a resposta e o cliente HTTP
+      EntityUtils.consume(response.getEntity());
+      httpClient.close();
+
+    } catch (Exception e) {
+      // Capturar e registrar a exceção
+      subsegment.addException(e);
+      e.printStackTrace();
+    } finally {
+      // Finalizar o subsegmento do X-Ray
+      AWSXRay.endSubsegment();
+    }
+  }
+}
+
+
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { PedidosService, Pedido } from './pedidosService';
