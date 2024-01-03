@@ -1,3 +1,96 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TreeComponent } from './tree.component';
+import { render, screen, fireEvent } from '@testing-library/angular';
+
+describe('TreeComponent', () => {
+  let component: TreeComponent;
+  let fixture: ComponentFixture<TreeComponent>;
+
+  // mock input json
+  const inputJson = {
+    name: 'John',
+    age: 25,
+    gender: 'male',
+    hobbies: ['reading', 'gaming', 'coding']
+  };
+
+  // mock rules logic
+  const rulesLogic = [
+    {
+      id: 'item 1',
+      tipo: 'condicao',
+      valor: undefined,
+      operacao: undefined,
+      propriedade: undefined,
+      children: []
+    }
+  ];
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [TreeComponent]
+    }).compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(TreeComponent);
+    component = fixture.componentInstance;
+    component.nodes = rulesLogic; // assign mock rules logic to component nodes
+    fixture.detectChanges();
+  });
+
+  it('should create the component', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should render the initial data correctly', () => {
+    expect(screen.getByText('item 1')).toBeInTheDocument(); // check if the root node is rendered
+    expect(screen.getByText('condicao')).toBeInTheDocument(); // check if the node type is rendered
+    expect(screen.getByText('Adicionar')).toBeInTheDocument(); // check if the add button is rendered
+    expect(screen.getByText('Remover')).toBeInTheDocument(); // check if the remove button is rendered
+    expect(screen.getByText('Editar')).toBeInTheDocument(); // check if the edit button is rendered
+  });
+
+  it('should add a new node when the add button is clicked', async () => {
+    await fireEvent.click(screen.getByText('Adicionar')); // click the add button
+    expect(screen.getByText('item 2')).toBeInTheDocument(); // check if the new node is rendered
+    expect(screen.getByText('condicao')).toBeInTheDocument(); // check if the new node type is rendered
+    expect(screen.getByText('Adicionar')).toBeInTheDocument(); // check if the add button is rendered
+    expect(screen.getByText('Remover')).toBeInTheDocument(); // check if the remove button is rendered
+    expect(screen.getByText('Editar')).toBeInTheDocument(); // check if the edit button is rendered
+  });
+
+  it('should remove a node when the remove button is clicked', async () => {
+    await fireEvent.click(screen.getByText('Adicionar')); // add a new node
+    await fireEvent.click(screen.getByText('Remover')); // click the remove button
+    expect(screen.queryByText('item 2')).not.toBeInTheDocument(); // check if the new node is removed
+  });
+
+  it('should edit a node when the edit button is clicked', async () => {
+    await fireEvent.click(screen.getByText('Editar')); // click the edit button
+    await fireEvent.change(screen.getByPlaceholderText('Tipo'), { target: { value: 'operador' } }); // change the node type to operador
+    await fireEvent.change(screen.getByPlaceholderText('Valor'), { target: { value: 'and' } }); // change the node value to and
+    await fireEvent.click(screen.getByText('Salvar')); // click the save button
+    expect(screen.getByText('operador')).toBeInTheDocument(); // check if the node type is updated
+    expect(screen.getByText('and')).toBeInTheDocument(); // check if the node value is updated
+  });
+
+  it('should drag and drop a node when the node is dragged and dropped', async () => {
+    await fireEvent.click(screen.getByText('Adicionar')); // add a new node
+    await fireEvent.dragStart(screen.getByText('item 2')); // drag the new node
+    await fireEvent.drop(screen.getByText('item 1')); // drop the new node on the root node
+    expect(screen.getByText('operador')).toBeInTheDocument(); // check if the root node type is changed to operador
+    expect(screen.getByText('and')).toBeInTheDocument(); // check if the root node value is changed to and
+    expect(screen.getByText('item 2')).toBeInTheDocument(); // check if the new node is still rendered
+  });
+
+  it('should validate the rules logic and return the correct decision', () => {
+    component.validate(inputJson); // call the validate method with the mock input json
+    expect(component.decision).toBe(true); // check if the decision is true
+  });
+});
+
+
 // Importar as classes necessárias
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.proxies.apache.http.HttpClientBuilder;
