@@ -1,4 +1,22 @@
-    public static void alterarPropriedades (Object solicitacaodecredrito, Map<String, Object> map) throws Exception {
+Sou proativo, inovador, autônomo, colaborativo e ágil. Busco sempre aprender e me aprimorar. Tenho sólidos conhecimentos em AWS e sou referência na comunidade. Destaco as seguintes realizações:
+
+Automatizei a infraestrutura na cloud AWS, reduzindo tempo, custos e riscos.
+Liderei a migração de uma aplicação legada para a cloud AWS, melhorando a performance, a disponibilidade e a escalabilidade.
+Obtive duas certificações em AWS, comprovando meu domínio técnico.
+Participei de um evento online sobre AWS, compartilhando um case de sucesso e dicas para a comunidade.
+Mentoreei dois colegas em AWS, ajudando-os a se qualificar e a serem contratados.
+Quero desenvolver mais:
+
+Machine learning e inteligência artificial na cloud AWS.
+Comunicação e apresentação em inglês.
+Rede de contatos e participação na comunidade de AWS.
+Metas para o próximo período:
+
+Obter a certificação AWS Certified Machine Learning - Specialty.
+Realizar um curso online de comunicação e apresentação em inglês.
+Participar de um evento presencial sobre AWS.
+
+public static void alterarPropriedades (Object solicitacaodecredrito, Map<String, Object> map) throws Exception {
         // Obtém as informações sobre as propriedades do objeto solicitacaodecredrito
         BeanInfo info = Introspector.getBeanInfo (solicitacaodecredrito.getClass ());
         // Percorre as propriedades do objeto solicitacaodecredrito
